@@ -47,8 +47,6 @@ void mqttApp2::initialize(int stage)
         std::string tt=par("subscribeToTopics");
         std::string pubTopics=par("subscribeToTopics");
         publish=par("publish");
-        //clientID=RandomString(10);
-
         ptrSubscribe=0;
         prtPublish=0;
         publish=par("publish");
@@ -60,7 +58,6 @@ void mqttApp2::initialize(int stage)
         std::string s;
 
         while (getline(f, s, ',')) {
-            //EV<<"topics: "<< s <<"\n";
             subscribeToTopics.push_back(s);
         }
 
@@ -161,7 +158,6 @@ void mqttApp2::sendPacket()
 
     socket.sendTo(mqttMessage, destAddr, destPort);
 
-    //socket.sendTo(payload, destAddr, destPort);
     numSent++;
 }
 
@@ -188,7 +184,6 @@ void mqttApp2::processStart()
     }
 
     if (!destAddresses.empty()) {
-        //selfMsg->setKind(CONNECT);
         selfMsg->setKind(SEND);
         processSend();
     }
@@ -203,8 +198,6 @@ void mqttApp2::processStart()
 void mqttApp2::processSend()
 {
     EV<<"client break1";
-
-    //sendPacket();
 
     sendConnect();
     simtime_t d = simTime() + par("sendInterval").doubleValue();
@@ -231,7 +224,6 @@ void mqttApp2::sendConnect()
     mqttMessage->setClientId(pchar);
 
     mqttMessage->setQosLevel(1);
-    //mqttMessage->setClientId(packetName);
 
     L3Address destAddr = chooseDestAddr();
 
@@ -288,11 +280,6 @@ void mqttApp2::processPacket(cPacket *pk)
                 for(unsigned int i=0;i<uploadedTasks.size();i++){
                     if(strcmp(ack->getMessageID(),uploadedTasks[i]->getMessageId())==0){
                         emit(taskTimeSignal,((simTime()-uploadedTasks[i]->getTimeCreated())*1000));
-
-
-                        //emit(delaySignal, ((simTime()-uploadedTasks[i]->getTimeCreated())));
-                        //emit(delaySignal, (simTime()-uploadedTasks[i]->getTimeCreated()));
-                        //emit(delaySignal, 1.3);
                         uploadedTasks.erase(uploadedTasks.begin()+i);
                         std::ostringstream str;
                         str << "Task: "<< ack->getMessageID()<<" performed";
@@ -306,21 +293,6 @@ void mqttApp2::processPacket(cPacket *pk)
         } catch (const std::exception& e) {
 
         }
-
-        // emit(delaySignal, 1.2);
-        /*
-
-        MqttMsgPuback *ack = check_and_cast<MqttMsgPuback *>(pk);
-
-        for(unsigned int lp=0; lp<publishedDatatable.size(); lp++){
-            if(strcmp(ack->getMessageID(),publishedDatatable[lp]->getMqttMessages()->getMessageID())==0){
-                emit(delaySignal, simTime()-publishedDatatable[lp]->getMqttMessages()->getCreationTime());
-                break;
-            }
-        }
-
-         */
-
 
     }
 
@@ -365,10 +337,6 @@ void mqttApp2::processConSubAck(cPacket *c){
 
         EV_WARN<<"subscribed topic:"<< subscribeToTopics[ptrSubscribe];
 
-        //mqttSubscribe->setClientID(RandomString(10).c_str());
-
-        //mqttSubscribe->setClientID(clientID.c_str());
-
         std::string s = std::to_string(this->getId());
         char const *pchar = s.c_str();
 
@@ -397,32 +365,18 @@ void mqttApp2::sendMqttData()
     MqttMsgPublish *mqttPublish = new MqttMsgPublish(str.str().c_str());
     L3Address destAddr = chooseDestAddr();
 
-    //mqttPublish->setMessageID(RandomString(15).c_str());
     mqttPublish->setMessageID(mID);
-    //delete mID;
-
-    //fixed sized task
-    //mqttPublish->setMIPSRequired(taskSize);
-
-    //variable sized tasks
-
 
     mqttPublish->setMIPSRequired(200 + rand() % (( 900 + 1 ) - 200));
 
     mqttPublish->setRequiredTime(0.01);
 
-
-    //EV<<"my name: "<<getParentModule()->
-
     mqttPublish->setClientID(clientID.c_str());
 
-    //mqttPublish->setTopic(publishToTopics[0].c_str());
 
     mqttPublish->setTopic("compute task");
 
-    //mqttPublish->setByteLength(rand() % 100 + 900);
     mqttPublish->setByteLength(128);
-    //mqttPublish->setByteLength(par("messageLength").longValue());
 
     mqttPublish->setQoS(1);
 
@@ -438,7 +392,6 @@ void mqttApp2::sendMqttData()
     //////////////////////////////////////////
     emit(sentPkSignal, mqttPublish);
 
-    //publishedRequests.push_back(mqttPublish);
     socket.sendTo(mqttPublish, destAddr, destPort);
 
 
@@ -529,7 +482,6 @@ bool mqttApp2::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     if (selfMsg)
         cancelEvent(selfMsg);
-    //TODO if(socket.isOpened()) socket.close();
     return true;
 }
 
