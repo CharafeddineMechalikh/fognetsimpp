@@ -52,10 +52,6 @@ void BrokerBaseApp3::initialize(int stage)
 
         selfMsg->setKind(10);
 
-        //cancelEvent(selfMsg);
-
-        //cancelAndDelete(selfMsg);
-
     }
 
     else if (stage == INITSTAGE_LAST) {
@@ -80,8 +76,6 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
     }
 
     else if (msg->getKind() == UDP_I_ERROR) {
-        //if (msg->getKind() == UDP_I_ERROR) {
-        // ICMP error report -- discard it
         delete msg;
     }
 
@@ -100,7 +94,6 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
         UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(pk->removeControlInfo());
         L3Address srcAddress = ctrl->getSrcAddr();
         int srcPort = ctrl->getSrcPort();
-        //int sktid=ctrl->getSockId();
         delete ctrl;
 
         if (dynamic_cast<MqttMsgConnect* >(msg)) {
@@ -118,16 +111,7 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
                         mqttPkt->getProtocolName(),mqttPkt->getProtocolVersion(),mqttPkt->getWillFlag(),
                         mqttPkt->getWillTopic(), mqttPkt->getWillMessage(),mqttPkt->getCleanSession(),
                         mqttPkt->getKeepAlivePeriod());
-
-                //clients[numClients]=client;
                 clients.push_back(client);
-
-                //clients.insert(clients.begin() + numClients,client);
-                /*
-                for(unsigned int m=0;m< clients.size(); m++){
-                    EV<<"clientclient: "<<clients[m]->getClientId()<<"\n";
-                }
-                 */
 
                 numClients++;
             }
@@ -153,32 +137,11 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
 
         else if (dynamic_cast<MqttMsgPublish* >(msg)) {
 
-            //MqttMsgPublish *mqttPkt = dynamic_cast<MqttMsgPublish *>(msg);
-
             MqttMsgPublish *mqttPkt = check_and_cast<MqttMsgPublish *>(msg);
-
-            //MqttMessages.push_back(mqttPkt);
 
             if(mqttPkt->getQoS()==1){
                 emit(delaySignal, ((simTime()-mqttPkt->getCreationTime())));
 
-                /*
-                if(mqttPkt->getMIPSRequired() < MIPS){
-                    sendPubAck(mqttPkt,srcAddress,srcPort, true);
-
-                }
-
-                else{
-                    std::ostringstream str;
-                    str << "Ack" << "-" << mqttPkt->getName()<<"-compp requested-"<<mqttPkt->getMessageID();
-                    MqttMsgPuback *pubAck=new MqttMsgPuback(str.str().c_str());
-                    pubAck->setMessageID(mqttPkt->getMessageID());
-                    pubAck->setStatus(4); //request forwarded to compute broker
-                    socket.sendTo(pubAck, srcAddress, srcPort);
-                    sendPubAck(mqttPkt,srcAddress,srcPort, false);
-
-                }
-                 */
                 std::ostringstream str;
                 str << "Ack" << "-" << mqttPkt->getName()<<"-compp requested-"<<mqttPkt->getMessageID();
                 MqttMsgPuback *pubAck=new MqttMsgPuback(str.str().c_str());
@@ -192,12 +155,9 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
 
             }
 
-            //publishAll(msg);
-            //EV<<"mLength: "<<MqttMessages.size();
         }
 
         else if(dynamic_cast<FognetMsgTaskAck* >(msg)){
-            //FognetMsgTaskAck *ack = check_and_cast<FognetMsgTaskAck *>(msg);
 
         }
 
@@ -209,7 +169,6 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
                         socket.sendTo(ack->dup(),requests[a]->getClientIp(),requests[a]->getClientPort());
                         requests[a]->setStatus(true);
                         requests[a]->setAckStatus(1);
-                        //requests.erase(requests.begin()+a);
                         break;
                     }
                 }
@@ -221,7 +180,6 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
                         socket.sendTo(ack->dup(),requests[a]->getClientIp(),requests[a]->getClientPort());
                         requests[a]->setStatus(false);
                         requests[a]->setAckStatus(1);
-                        //requests.erase(requests.begin()+a);
                         break;
                     }
                 }
@@ -233,7 +191,6 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
                         socket.sendTo(ack->dup(),requests[a]->getClientIp(),requests[a]->getClientPort());
                         requests[a]->setStatus(false);
                         requests[a]->setAckStatus(1);
-                        //requests.erase(requests.begin()+a);
                         break;
                     }
                 }
@@ -247,16 +204,10 @@ void BrokerBaseApp3::handleMessageWhenUp(cMessage *msg)
 
             MqttMsgSubscribe *mqttPkt = check_and_cast<MqttMsgSubscribe *>(msg);
             Subscription *sub=new Subscription(mqttPkt->getClientID(), mqttPkt->getQos(),mqttPkt->getTopic());
-            //subscriptions.insert(subscriptions.begin() + numSubscribed, sub);
             subscriptions.push_back(sub);
             for(unsigned int i=0;i<subscriptions.size();i++){
                 EV_WARN<<"Subscribed with client ID: "<<subscriptions[i]->getClientId()<<", Topic: "<<subscriptions[i]->getTopic() <<"\n";
             }
-            //subscriptions[numSubscribed][0]=mqttPkt->getClientID();
-            //subscriptions[numSubscribed][1]=mqttPkt->getTopic();
-            //std::string s = std::to_string(mqttPkt->getQos());
-            //char const *pchar = s.c_str();
-            //subscriptions[numSubscribed][2]=pchar;
             numSubscribed++;
 
             std::ostringstream ackName;
@@ -314,76 +265,21 @@ void BrokerBaseApp3::sendPubAck(MqttMsgPublish *mqttPkt, L3Address ip, int prt, 
     else{
 
         int currentGoodBroker=0;
-        //tskTime=((static_cast<double>(mqttPkt->getByteLength()))/brokers[0]->getMips());
         tskTime=mqttPkt->getMIPSRequired()/brokers[0]->getMips();
         if(brokers.size() > 0){
             double tempp=(brokers[0]->getBusyTime())+tskTime;
             if(brokers.size()>1){
-
-                /*
-
-                for(unsigned int j=1;j<brokers.size(); j++){
-                    if((brokers[j]->getBusyTime()+ ((static_cast<double>(mqttPkt->getByteLength()))/brokers[0]->getMips()) )<tempp){
-                        //tempp=brokers[j]->getBusyTime()+((static_cast<double>(mqttPkt->getByteLength()))/brokers[0]->getMips());
-                        tempp=brokers[j]->getBusyTime()+(mqttPkt->getMIPSRequired())/brokers[0]->getMips());
-
-                        currentGoodBroker=j;
-                    }
-                }
-
-                 */
-
                 for(unsigned int j=0;j<brokers.size(); j++){
                     if((brokers[j]->getBusyTime()+ (mqttPkt->getMIPSRequired()/brokers[0]->getMips()) )<tempp){
-                        //tempp=brokers[j]->getBusyTime()+((static_cast<double>(mqttPkt->getByteLength()))/brokers[0]->getMips());
+                       
                         tempp=brokers[j]->getBusyTime()+(mqttPkt->getMIPSRequired()/brokers[0]->getMips());
 
                         currentGoodBroker=j;
                     }
                 }
 
-
-                /*
-                switch(algo){
-                case 0:
-                {
-
-                    currentGoodBroker=rand()% (brokers.size() + 0);
-
-                }
-                case 1:{
-                    for(unsigned int j=0;j<brokers.size(); j++){
-                        if((brokers[j]->getBusyTime()+ (mqttPkt->getMIPSRequired()/brokers[0]->getMips()) )<tempp){
-                            //tempp=brokers[j]->getBusyTime()+((static_cast<double>(mqttPkt->getByteLength()))/brokers[0]->getMips());
-                            tempp=brokers[j]->getBusyTime()+(mqttPkt->getMIPSRequired()/brokers[0]->getMips());
-
-                            currentGoodBroker=j;
-                        }
-                    }
-
-                }
-
-                }
-
-                 */
-
-
-
-
-
-
             }
 
-            /*
-            int temp=brokers[0]->getMips();
-            for(unsigned int i=0; i<brokers.size(); i++){
-                if(i+1 < brokers.size()){
-                    if(brokers[i+1]->getMips()>temp){
-                        currentGoodBroker=i+1;
-                    }
-                }
-            }
-             */
             std::ostringstream str;
             str << "request "<<mqttPkt->getMIPSRequired() <<" for "<< mqttPkt->getRequiredTime()<<" sec from " << brokers[currentGoodBroker]->getBrokerId();
             FognetMsgTask *tsk=new FognetMsgTask(str.str().c_str());
@@ -404,19 +300,7 @@ void BrokerBaseApp3::sendPubAck(MqttMsgPublish *mqttPkt, L3Address ip, int prt, 
             char const *pchar = s.c_str();
             tsk->setClientID(pchar);
             socket.sendTo(tsk, brokers[currentGoodBroker]->getBrokerIp(), brokers[currentGoodBroker]->getBrokerPort());
-            /*
-
-            if(mqttPkt->getMIPSRequired() < brokers[currentGoodBroker]->getMips()){
-                tsk->setRequiredMIPS(mqttPkt->getMIPSRequired());
-                tsk->setRequiredTime(mqttPkt->getRequiredTime());
-                tsk->setRequestID(mqttPkt->getMessageID());
-                std::string s = std::to_string(this->getId());
-                char const *pchar = s.c_str();
-                tsk->setClientID(pchar);
-                socket.sendTo(tsk, brokers[currentGoodBroker]->getBrokerIp(), brokers[currentGoodBroker]->getBrokerPort());
-            }
-
-             */
+           
         }
 
         else{
@@ -435,103 +319,6 @@ void BrokerBaseApp3::sendPubAck(MqttMsgPublish *mqttPkt, L3Address ip, int prt, 
         }
 
     }
-
-    /*
-
-
-    FognetMsgTask *tsk=new FognetMsgTask("request resource");
-
-            if(brokers.size() > 0){
-
-                if(mqttPkt->getMIPSRequired() < brokers[0]->getMips()){
-                    tsk->setRequiredMIPS(mqttPkt->getMIPSRequired());
-                    tsk->setRequiredTime(mqttPkt->getRequiredTime());
-                    tsk->setRequestID("abc");
-
-                    std::string s = std::to_string(this->getId());
-                    char const *pchar = s.c_str();
-
-                    tsk->setClientID(pchar);
-
-                    socket.sendTo(tsk, brokers[0]->getBrokerIp(), brokers[0]->getBrokerPort());
-                }
-            }
-
-            else{
-                MqttMsgPuback *pubAck=new MqttMsgPuback("no compute res available");
-
-                pubAck->setMessageID("rep");
-
-                for(unsigned int i=0; i< clients.size(); i++){
-                    if(strcmp(mqttPkt->getClientID(),clients[i]->getClientId())==0){
-                        socket.sendTo(pubAck, clients[i]->getClientIp(), clients[i]->getClientPort());
-                        //selfMsg->setKind(RELEASERESOURCE);
-                        //scheduleAt(simTime() + mqttPkt->getRequiredTime(), selfMsg);
-                        break;
-                    }
-                }
-            }
-
-     */
-
-    //MqttMsgPublish *mqttPkt = check_and_cast<MqttMsgPublish *>(p);
-
-    //UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(mqttPkt->removeControlInfo());
-    //L3Address srcAddress = ctrl->getSrcAddr();
-    //int srcPort = ctrl->getSrcPort();
-    //int sktid=ctrl->getSockId();
-    //delete ctrl;
-
-    /*
-
-
-        if(status==true){
-            str << "Ack" << "-" << mqttPkt->getName()<<"-success";
-            MIPS=MIPS - mqttPkt->getMIPSRequired();
-
-            Request *req=new Request(mqttPkt->getClientID(),RandomString(10).c_str(),
-                    ip,prt,mqttPkt->getMIPSRequired(),
-                    simTime().dbl() + mqttPkt->getRequiredTime(),true);
-
-            requests.push_back(req);
-
-            MqttMsgPuback *pubAck=new MqttMsgPuback(str.str().c_str());
-
-            pubAck->setMessageID("rep");
-
-            for(unsigned int i=0; i< clients.size(); i++){
-                if(strcmp(mqttPkt->getClientID(),clients[i]->getClientId())==0){
-                    socket.sendTo(pubAck, clients[i]->getClientIp(), clients[i]->getClientPort());
-                    selfMsg->setKind(RELEASERESOURCE);
-                    scheduleAt(simTime() + mqttPkt->getRequiredTime(), selfMsg);
-                    break;
-                }
-            }
-
-        }
-
-        else{
-
-            FognetMsgTask *tsk=new FognetMsgTask("request resource");
-
-            if(brokers.size() > 0){
-
-                if(mqttPkt->getMIPSRequired() < brokers[0]->getMips()){
-                    tsk->setRequiredMIPS(mqttPkt->getMIPSRequired());
-                    tsk->setRequiredTime(0.0001);
-                    tsk->setRequestID("abc");
-
-                    std::string s = std::to_string(this->getId());
-                    char const *pchar = s.c_str();
-
-                    tsk->setClientID(pchar);
-
-                    socket.sendTo(tsk, brokers[0]->getBrokerIp(), brokers[0]->getBrokerPort());
-                }
-            }
-        }
-
-     */
 }
 
 void BrokerBaseApp3::updateDisplay()
@@ -559,7 +346,6 @@ bool BrokerBaseApp3::handleNodeStart(IDoneCallback *doneCallback)
 
 bool BrokerBaseApp3::handleNodeShutdown(IDoneCallback *doneCallback)
 {
-    //TODO if(socket.isOpened()) socket.close();
     return true;
 }
 
@@ -594,45 +380,8 @@ void BrokerBaseApp3::publishAll(cMessage *msg){
                     socket.sendTo(copy, clients[a]->getClientIp(), clients[a]->getClientPort());
                 }
             }
-
-            //Client *cli=findClient(mqttPkt->getClientID());
-
-            //socket.sendTo(copy, cli->getClientIp(), cli->getClientPort());
-
-            //uncomment it first
-            //socket.sendTo(copy, clients[0]->getClientIp(), clients[0]->getClientPort());
-
         }
     }
-
-    /*
-    cPacket *mqttPkt = check_and_cast<cPacket *>(msg);
-    //MqttMsgPublish *mqttPkt = check_and_cast<MqttMsgPublish *>(msg);
-
-    for (int i = 0; i < numSubscribed; i++)
-    {
-        cPacket *copy = mqttPkt->dup();
-        if(i==0){
-            copy->setName("0");
-        }
-        else if(i==1){
-            copy->setName("1");
-        }
-
-        socket.sendTo(copy, clients[i]->getClientIp(), clients[i]->getClientPort());
-        //send(copy, "out", i);
-
-    }
-    //delete msg;
-
-
-    //socket.sendTo(mqttPkt, clients[0]->getClientIp(), clients[0]->getClientPort());
-
-
-    //socket.sendTo(mqttPkt, clients[1]->getClientIp(), clients[1]->getClientPort());
-
-
-     */
 }
 
 void BrokerBaseApp3::publishMessage(const char* clientID, cMessage *msg){
@@ -664,7 +413,6 @@ std::string BrokerBaseApp3::RandomString(unsigned int len)
 }
 
 void BrokerBaseApp3 ::releaseResource(const char* id){
-    //FognetMsgTask *tsk = check_and_cast<FognetMsgTask *>(pk);
     MqttMsgPuback *pubak=new MqttMsgPuback();
     for(unsigned int i=0; i < requests.size(); i++){
         if(requests[i]->getRequiredTime() <= simTime().dbl()){
@@ -690,11 +438,6 @@ void BrokerBaseApp3 ::releaseResource(const char* id){
     for(unsigned int i=0; i < requests.size(); i++){
         EV<<"Task: "<<requests[i]->getRequestId()<<"\n";
     }
-
-    //advertiseMIPS();
-    //cancelEvent(selfMsg);
-    //selfMsg->setKind(ADVERTISEMIPS);
-    //scheduleAt(simTime() + 0.0001 , selfMsg);
 
 }
 
