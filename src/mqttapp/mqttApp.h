@@ -88,7 +88,6 @@ class INET_API mqttApp : public ApplicationBase
     virtual void processConSubAck(cPacket *c);
 
     virtual void sendConnect();
-    //virtual void sendSubscribe();
 
     virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
     virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
