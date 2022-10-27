@@ -130,7 +130,6 @@ void ComputeBrokerApp3::sendPacket()
 
     socket.sendTo(mqttMessage, destAddr, destPort);
 
-    //socket.sendTo(payload, destAddr, destPort);
     numSent++;
 }
 
@@ -156,7 +155,6 @@ void ComputeBrokerApp3::processStart()
     }
 
     if (!destAddresses.empty()) {
-        //selfMsg->setKind(CONNECT);
         selfMsg->setKind(SEND);
         processSend();
     }
@@ -170,8 +168,6 @@ void ComputeBrokerApp3::processStart()
 
 void ComputeBrokerApp3::processSend()
 {
-
-    //sendPacket();
     sendConnect();
     simtime_t d = simTime() + par("sendInterval").doubleValue();
     if (stopTime < SIMTIME_ZERO || d < stopTime) {
@@ -198,7 +194,6 @@ void ComputeBrokerApp3::sendConnect()
     mqttMessage->setClientId(pchar);
 
     mqttMessage->setQosLevel(1);
-    //mqttMessage->setClientId(packetName);
 
     L3Address destAddr = chooseDestAddr();
 
@@ -221,29 +216,9 @@ void ComputeBrokerApp3::advertiseMIPS()
     mipsMessage->setMIPS(MIPS);
     mipsMessage->setBusyTime(busyTime);
 
-    /*
-    if(requests.size()<1){
-        mipsMessage->setBusyTime(busyTime);
-    }
-    else{
-        double temp=0.0;
-        for(unsigned int i=0;i<requests.size();i++){
-            temp=temp+requests[i]->getRequiredTime();
-        }
-        EV<<"temppp"<<temp;
-        mipsMessage->setBusyTime(temp);
-    }
-
-     */
-
-    //mipsMessage->setQosLevel(0);
-    //mqttMessage->setClientId(packetName);
-
     L3Address destAddr = chooseDestAddr();
 
     socket.sendTo(mipsMessage, destAddr, destPort);
-
-    //scheduleAt(simTime() + 0.01 , selfMsg);
 }
 
 void ComputeBrokerApp3::releaseResource(){
@@ -256,14 +231,11 @@ void ComputeBrokerApp3::releaseResource(){
     pubak->setStatus(6); //task performed successfully
     busyTime=busyTime-currentTask.getRequiredTime();
     socket.sendTo(pubak,currentTask.getClientIp(), currentTask.getClientPort());
-
-    //requests.erase(requests.begin()+0);
     resourceStatus=false;
 
     if(requests.size()>0){
         resourceStatus=true;
         emit(queueTimeSignal, ((simTime()-requests[0]->getQueueStartTime())*1000));
-        //EV<<"asdfgh"<<requests[0]->getQueueStartTime() <<"\n";
 
         currentTask.setClientId(requests[0]->getClientId());
         currentTask.setRequestId(requests[0]->getRequestId());
@@ -300,12 +272,9 @@ void ComputeBrokerApp3::processPacket(cPacket *pk)
         UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(pk->removeControlInfo());
         L3Address srcAddress = ctrl->getSrcAddr();
         int srcPort = ctrl->getSrcPort();
-        //int sktid=ctrl->getSockId();
         delete ctrl;
-        //double tskTime=((static_cast<double>(tsk->getByteLength()))/MIPS);
         double tskTime=tsk->getRequiredMIPS()/MIPS;
         try{
-            //Request *req=new Request(tsk->getClientID(),tsk->getRequestID(),srcAddress,srcPort,tsk->getRequiredMIPS(),tskTime,true);
 
             busyTime=busyTime+tskTime;
 
@@ -316,10 +285,6 @@ void ComputeBrokerApp3::processPacket(cPacket *pk)
                 MqttMsgPuback *taskAck=new MqttMsgPuback("task assigned");
                 taskAck->setMessageID(tsk->getRequestID());
                 taskAck->setStatus(5);
-
-                //FognetMsgTaskAck *taskAck=new FognetMsgTaskAck("task assigned");
-                //taskAck->setRequestID(tsk->getRequestID());
-                //taskAck->setStatus(true);
 
                 socket.sendTo(taskAck, srcAddress, srcPort);
 
@@ -342,9 +307,6 @@ void ComputeBrokerApp3::processPacket(cPacket *pk)
 
 
                 requests.push_back(req);
-                //FognetMsgTaskAck *taskAck=new FognetMsgTaskAck("task is queued");
-                //taskAck->setRequestID(tsk->getRequestID());
-                //taskAck->setStatus(true);
                 MqttMsgPuback *taskAck=new MqttMsgPuback("task queued");
                 taskAck->setMessageID(tsk->getRequestID());
                 taskAck->setStatus(4);
@@ -379,8 +341,6 @@ void ComputeBrokerApp3::updateBaseBroker(){
     L3Address destAddr = chooseDestAddr();
 
     socket.sendTo(msgUpdateBaseBroker, destAddr, destPort);
-
-    //ptrSubscribe++;
 
 }
 
@@ -457,7 +417,6 @@ bool ComputeBrokerApp3::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     if (selfMsg)
         cancelEvent(selfMsg);
-    //TODO if(socket.isOpened()) socket.close();
     return true;
 }
 
