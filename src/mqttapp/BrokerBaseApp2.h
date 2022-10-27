@@ -39,11 +39,9 @@ class INET_API BrokerBaseApp2 : public ApplicationBase
 
     cMessage *selfMsg = nullptr;
 
-    //Client* clients[10];
     std::vector<Subscription*> subscriptions;
     std::vector<MqttMsgPublish*> MqttMessages;
     std::vector<Request*> requests;
-    //const char* subscriptions[10][3];
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
