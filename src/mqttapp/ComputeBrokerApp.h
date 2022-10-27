@@ -68,7 +68,6 @@ class INET_API ComputeBrokerApp : public ApplicationBase
     virtual void updateBaseBroker();
 
     virtual void sendConnect();
-    //virtual void sendSubscribe();
 
     virtual bool handleNodeStart(IDoneCallback *doneCallback) override;
     virtual bool handleNodeShutdown(IDoneCallback *doneCallback) override;
