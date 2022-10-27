@@ -125,8 +125,6 @@ void ComputeBrokerApp2::sendPacket()
 
     socket.sendTo(mqttMessage, destAddr, destPort);
 
-
-    //socket.sendTo(payload, destAddr, destPort);
     numSent++;
 }
 
@@ -152,7 +150,6 @@ void ComputeBrokerApp2::processStart()
     }
 
     if (!destAddresses.empty()) {
-        //selfMsg->setKind(CONNECT);
         selfMsg->setKind(SEND);
         processSend();
     }
@@ -168,7 +165,6 @@ void ComputeBrokerApp2::processSend()
 {
     EV<<"client break1";
 
-    //sendPacket();
     sendConnect();
     simtime_t d = simTime() + par("sendInterval").doubleValue();
     if (stopTime < SIMTIME_ZERO || d < stopTime) {
@@ -195,7 +191,6 @@ void ComputeBrokerApp2::sendConnect()
     mqttMessage->setClientId(pchar);
 
     mqttMessage->setQosLevel(1);
-    //mqttMessage->setClientId(packetName);
 
     L3Address destAddr = chooseDestAddr();
 
@@ -217,9 +212,6 @@ void ComputeBrokerApp2::advertiseMIPS()
 
     mipsMessage->setMIPS(MIPS);
 
-    //mipsMessage->setQosLevel(0);
-    //mqttMessage->setClientId(packetName);
-
     L3Address destAddr = chooseDestAddr();
 
     socket.sendTo(mipsMessage, destAddr, destPort);
@@ -228,7 +220,6 @@ void ComputeBrokerApp2::advertiseMIPS()
 }
 
 void ComputeBrokerApp2::releaseResource(){
-    //FognetMsgTask *tsk = check_and_cast<FognetMsgTask *>(pk);
 
     for(unsigned int i=0; i < requests.size(); i++){
         if(requests[i]->getRequiredTime() < simTime().dbl()){
@@ -236,14 +227,6 @@ void ComputeBrokerApp2::releaseResource(){
 
             std::ostringstream str;
             str << "Task  " << requests[i]->getRequestId() << " performed";
-
-            /*
-            FognetMsgTaskAck *ackk=new FognetMsgTaskAck(str.str().c_str());
-            ackk->setRequestID(requests[i]->getRequestId());
-            ackk->setStatus(6);
-            socket.sendTo(ackk,requests[i]->getClientIp(), requests[i]->getClientPort());
-
-            */
 
             MqttMsgPuback *pubak=new MqttMsgPuback(str.str().c_str());
             pubak->setQos(0);
@@ -258,9 +241,6 @@ void ComputeBrokerApp2::releaseResource(){
     }
 
     advertiseMIPS();
-    //cancelEvent(selfMsg);
-    //selfMsg->setKind(ADVERTISEMIPS);
-    //scheduleAt(simTime() + 0.0001 , selfMsg);
 
 }
 
@@ -284,7 +264,6 @@ void ComputeBrokerApp2::processPacket(cPacket *pk)
         UDPDataIndication *ctrl = check_and_cast<UDPDataIndication *>(pk->removeControlInfo());
         L3Address srcAddress = ctrl->getSrcAddr();
         int srcPort = ctrl->getSrcPort();
-        //int sktid=ctrl->getSockId();
         delete ctrl;
         try{
             if(tsk->getRequiredMIPS() < MIPS){
@@ -378,11 +357,8 @@ void ComputeBrokerApp2::sendMqttData()
 
     mqttPublish->setMIPSRequired(100);
 
-    //EV<<"my name: "<<getParentModule()->
 
     mqttPublish->setClientID(clientID.c_str());
-
-    //mqttPublish->setTopic(publishToTopics[0].c_str());
 
     mqttPublish->setTopic("test topic 1");
 
@@ -393,7 +369,6 @@ void ComputeBrokerApp2::sendMqttData()
 
     simtime_t d = simTime() + par("sendInterval").doubleValue();
     if (stopTime < SIMTIME_ZERO || d < stopTime) {
-        //selfMsg->setKind(MQTTDATA);
         cancelEvent(selfMsg);
         scheduleAt(d, selfMsg);
     }
@@ -474,7 +449,6 @@ bool ComputeBrokerApp2::handleNodeShutdown(IDoneCallback *doneCallback)
 {
     if (selfMsg)
         cancelEvent(selfMsg);
-    //TODO if(socket.isOpened()) socket.close();
     return true;
 }
 
